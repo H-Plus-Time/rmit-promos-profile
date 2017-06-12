@@ -3,11 +3,11 @@
 <dom-module id="time-range-output">
     <template>
         <style>
-            :host {
-                padding:5px;
-                display:flex;
-                flex-direction:column;
-                align-items:center;
+             :host {
+                padding: 5px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
         </style>
         <label>[[name]]</label>
@@ -15,14 +15,16 @@
     </template>
     <script>
         class TimeRangeOutput extends Polymer.Element {
-            static get is() { return 'time-range-output'; }
+            static get is() {
+                return 'time-range-output';
+            }
             static get properties() {
                 return {
                     militaryTime: {
                         type: Boolean,
                         value: () => {
-                            let lString = (new Date(3600*4*1000)).toLocaleString();
-                            if(lString.indexOf('AM') != -1 || lString.indexOf('PM') != -1) {
+                            let lString = (new Date(3600 * 4 * 1000)).toLocaleString();
+                            if (lString.indexOf('AM') != -1 ||lString.indexOf('PM') != -1) {
                                 return false;
                             }
                             return true;
@@ -35,15 +37,17 @@
                     computedEnd: {
                         type: String,
                         computed: 'computeTime(end, militaryTime)'
-                    }
+                    },
+                    start: String,
+                    end: String,
+                    name: String
                 }
             }
             computeTime(time, militaryTime) {
-                if(militaryTime) {
+                if (militaryTime) {
                     // already stored in military time
                     return time;
-                }
-                else {
+                } else {
                     // we expect "HH:MM", since that's all the 
                     // defective input[type=time] can handle
                     let components = time.split(':');
@@ -65,16 +69,14 @@
 <dom-module id="operating-hours">
     <template>
         <style>
-            :host {
+             :host {
                 display: flex;
-                flex-wrap:wrap;
+                flex-wrap: wrap;
             }
         </style>
 
         <template is="dom-repeat" items="[[times]]">
-            <time-range-output start="[[item.start_time]]"
-                end="[[item.end_time]]" name="[[item.name]]"
-            ></time-range-output>
+            <time-range-output start="[[item.start_time]]" end="[[item.end_time]]" name="[[item.name]]"></time-range-output>
         </template>
 
     </template>
@@ -82,7 +84,9 @@
     <script>
         class MultiOperatingHoursElement extends Polymer.Element {
 
-            static get is() { return 'operating-hours'; }
+            static get is() {
+                return 'operating-hours';
+            }
 
             static get properties() {
                 return {
@@ -102,21 +106,20 @@
             ready() {
                 super.ready();
 
-                Polymer.RenderStatus.afterNextRender(this, function() {
-                });
+                Polymer.RenderStatus.afterNextRender(this, function () {});
             }
             // collapse identical adjacent days into one (e.g. MON-FRI 9:00AM - 5:00PM)
             computeGroupedDays(times) {
                 let catTimes = [];
                 let daysAccounted = 0;
-                if(!times) {
+                if (!times) {
                     return;
                 }
-                while(daysAccounted < times.length) {
+                while (daysAccounted < times.length) {
                     let cand = {};
-                    for(var i = daysAccounted; i < times.length; i++) {
+                    for (var i = daysAccounted; i < times.length; i++) {
                         // init the candidate range structure, since its empty.
-                        if(!cand.start_time) {
+                        if (!cand.start_time) {
                             cand = times[i];
                             daysAccounted++;
                             continue;
@@ -124,7 +127,7 @@
                         // break if we find a day with a different time range
                         // since we're only looking for contiguous groups, there's no 
                         // point going any further.
-                        if(times[i].start_time != cand.start_time || times[i].end_time != cand.end_time) {
+                        if (times[i].start_time != cand.start_time || times[i].end_time != cand.end_time) {
                             break;
                         }
                         cand.name = `${cand.name.split(' - ')[0]} - ${times[i].name}`;

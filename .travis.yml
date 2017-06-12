@@ -15,8 +15,6 @@ install:
   - npm install -g polymer-cli
   - polymer install
   - polymer build
-before_script:
-  - npm run lint
 script:
   - cp .surgeignore ./build/default
   - surge build/default https://rmit-promos.surge.sh --token $SURGE_TOKEN

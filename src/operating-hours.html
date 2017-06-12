@@ -24,7 +24,7 @@
                         type: Boolean,
                         value: () => {
                             let lString = (new Date(3600 * 4 * 1000)).toLocaleString();
-                            if (lString.indexOf('AM') != -1 ||lString.indexOf('PM') != -1) {
+                            if (lString.indexOf('AM') != -1 || lString.indexOf('PM') != -1) {
                                 return false;
                             }
                             return true;

@@ -1,0 +1,142 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="time-range-output">
+    <template>
+        <style>
+            :host {
+                padding:5px;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+            }
+        </style>
+        <label>[[name]]</label>
+        <div>[[computedStart]] - [[computedEnd]]</div>
+    </template>
+    <script>
+        class TimeRangeOutput extends Polymer.Element {
+            static get is() { return 'time-range-output'; }
+            static get properties() {
+                return {
+                    militaryTime: {
+                        type: Boolean,
+                        value: () => {
+                            let lString = (new Date(3600*4*1000)).toLocaleString();
+                            if(lString.indexOf('AM') != -1 || lString.indexOf('PM') != -1) {
+                                return false;
+                            }
+                            return true;
+                        }
+                    },
+                    computedStart: {
+                        type: String,
+                        computed: 'computeTime(start, militaryTime)'
+                    },
+                    computedEnd: {
+                        type: String,
+                        computed: 'computeTime(end, militaryTime)'
+                    }
+                }
+            }
+            computeTime(time, militaryTime) {
+                if(militaryTime) {
+                    // already stored in military time
+                    return time;
+                }
+                else {
+                    // we expect "HH:MM", since that's all the 
+                    // defective input[type=time] can handle
+                    let components = time.split(':');
+                    let hours = Number(components[0]);
+                    let period = (hours / 12 >> 0) == 1 ? 'PM' : 'AM';
+                    return `${hours % 12}:${components[1]} ${period}`;
+                }
+            }
+        }
+        window.customElements.define(TimeRangeOutput.is, TimeRangeOutput);
+    </script>
+</dom-module>
+
+<!--
+`<operating-hours>` is Description
+
+@element OperatingHours
+-->
+<dom-module id="operating-hours">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                flex-wrap:wrap;
+            }
+        </style>
+
+        <template is="dom-repeat" items="[[times]]">
+            <time-range-output start="[[item.start_time]]"
+                end="[[item.end_time]]" name="[[item.name]]"
+            ></time-range-output>
+        </template>
+
+    </template>
+
+    <script>
+        class MultiOperatingHoursElement extends Polymer.Element {
+
+            static get is() { return 'operating-hours'; }
+
+            static get properties() {
+                return {
+                    data: {
+                        type: Array
+                    },
+                    times: {
+                        computed: 'computeGroupedDays(data)'
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+            }
+
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                });
+            }
+            // collapse identical adjacent days into one (e.g. MON-FRI 9:00AM - 5:00PM)
+            computeGroupedDays(times) {
+                let catTimes = [];
+                let daysAccounted = 0;
+                if(!times) {
+                    return;
+                }
+                while(daysAccounted < times.length) {
+                    let cand = {};
+                    for(var i = daysAccounted; i < times.length; i++) {
+                        // init the candidate range structure, since its empty.
+                        if(!cand.start_time) {
+                            cand = times[i];
+                            daysAccounted++;
+                            continue;
+                        }
+                        // break if we find a day with a different time range
+                        // since we're only looking for contiguous groups, there's no 
+                        // point going any further.
+                        if(times[i].start_time != cand.start_time || times[i].end_time != cand.end_time) {
+                            break;
+                        }
+                        cand.name = `${cand.name.split(' - ')[0]} - ${times[i].name}`;
+                        daysAccounted++;
+                    }
+                    catTimes.push(cand);
+                }
+                return catTimes;
+            }
+
+        }
+
+        window.customElements.define(MultiOperatingHoursElement.is, MultiOperatingHoursElement);
+    </script>
+</dom-module>
